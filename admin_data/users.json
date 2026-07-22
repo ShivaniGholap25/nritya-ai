@@ -1,0 +1,92 @@
+{
+  "student": {
+    "full_name": "Demo Student",
+    "email": "student@nritya.ai",
+    "role": "student",
+    "salt": "dbf455073a43dbf73548cf3a6c27e3bc",
+    "password_hash": "5b9062474d204bfb1fdcec557bbe2b0f3d79f77875b35bca8ad6054f813d60e2",
+    "username": "student",
+    "student_profile": {},
+    "created_at": "2026-07-04T12:02:12"
+  },
+  "teacher": {
+    "full_name": "Demo Teacher",
+    "email": "teacher@nritya.ai",
+    "role": "teacher",
+    "salt": "2a98efae28c65e9a795390b7ec013f7c",
+    "password_hash": "201577761fe2d8a9b3736ab9841a957f0dbeb6fd52be0144741a20fe3bc83409",
+    "username": "teacher",
+    "student_profile": {},
+    "created_at": "2026-07-04T12:02:12"
+  },
+  "admin": {
+    "full_name": "Demo Admin",
+    "email": "admin@nritya.ai",
+    "role": "admin",
+    "salt": "d73937814da18a37b3df16838f597990",
+    "password_hash": "ed982f47ef7208ef8b6b83f131fc12860c73af7a5724e4579cfeae9f239b5682",
+    "username": "admin",
+    "student_profile": {},
+    "created_at": "2026-07-04T12:02:12"
+  },
+  "shivanigholap9021": {
+    "username": "shivanigholap9021",
+    "full_name": "Shivani Vinod Gholap",
+    "email": "shivanigholap9021@gmail.com",
+    "role": "student",
+    "student_profile": {
+      "exam_level": "Prarambhik",
+      "exam_board": "Gandharva Mahavidyalaya",
+      "expected_exam_date": "20226-09-02",
+      "years_training": "15"
+    },
+    "created_at": "2026-07-04T12:18:05",
+    "salt": "ec70b890ae4a3f08fb7ed23ad45dac17",
+    "password_hash": "5effa2a26525c090ff9b06304bda9978b4dc65b4b5e9c0930291ce7db1af0a01"
+  },
+  "ap9021": {
+    "username": "ap9021",
+    "full_name": "Shivani Vinod Gholap",
+    "email": "shiva@gmail.com",
+    "role": "student",
+    "student_profile": {
+      "exam_level": "Madhyama Purna",
+      "exam_board": "Akhil Bharatiya Gandharva Mahavidyalaya",
+      "expected_exam_date": "20226-09-02",
+      "years_training": "15"
+    },
+    "created_at": "2026-07-04T12:25:50",
+    "salt": "00a93139a261a7098abcefc167866335",
+    "password_hash": "4b585c5db0a77afbd3610b65f15c50093aa9bedac26a709fbfc55534140d6df4"
+  },
+  "om": {
+    "username": "om",
+    "full_name": "om",
+    "email": "om@gmail.com",
+    "role": "student",
+    "student_profile": {
+      "exam_level": "Prarambhik",
+      "exam_board": "Gandharva Mahavidyalaya",
+      "expected_exam_date": "",
+      "years_training": ""
+    },
+    "created_at": "2026-07-15T23:06:04",
+    "salt": "7c768e45a5fe8f5ef9c9ba3b4ad1f6d1",
+    "password_hash": "e3505e20f1deab6b2668ed00aef3a5d73dd91ec09eadad4a3816f75acccc2e57"
+  },
+  "omgholap": {
+    "username": "omgholap",
+    "full_name": "om",
+    "email": "omgholap@gmail.com",
+    "role": "student",
+    "student_profile": {
+      "exam_level": "Prarambhik",
+      "exam_board": "Gandharva Mahavidyalaya",
+      "expected_exam_date": "",
+      "years_training": ""
+    },
+    "created_at": "2026-07-15T23:06:45",
+    "salt": "190265727ff40ab6d5ed763e3b2ac9d5",
+    "password_hash": "8b3d4d28e58391acce508d57a257970fd6bd2d93c2275afaf68c2f91bff850be"
+  }
+}

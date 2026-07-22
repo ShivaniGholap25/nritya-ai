@@ -1,0 +1,19 @@
+{
+  "total_questions": 4,
+  "questions": {
+    "Bharatanatyam exam preparation question: who is inventer of bharatnatyam?\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.\nUs": 1,
+    "Bharatanatyam exam preparation question: Who is the author of Abhinaya Darpana?\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 wor": 1,
+    "Bharatanatyam exam preparation question: What is Bharatanatyam?\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.\nUse these he": 2
+  },
+  "topics": {
+    "Theory Exams": 3,
+    "Abhinaya": 1
+  },
+  "books": {
+    "theory.pdf": 2
+  },
+  "daily_usage": {
+    "2026-07-04": 3,
+    "2026-07-15": 1
+  }
+}

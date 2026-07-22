@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nritya.ai — AI-Powered Bharatanatyam Theory Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Outfit:wght@300..700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=3" />
+</head>
+
+<body>
+
+  <!-- ================= LOGIN SCREEN ================= -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-screen-inner">
+
+      <!-- Hero Section (moved from workspace) -->
+      <header class="app-header hero login-hero">
+        <div class="hero-content">
+          <h1 class="hero-title">NRITYA.AI</h1>
+          <p class="brand-subtitle">AI-Powered Bharatanatyam Theory Exam Assistant</p>
+          <p class="brand-desc">Learn Bharatanatyam theory through book-grounded, exam-oriented answers.</p>
+          <ul class="features-list">
+            <li><span class="feature-bullet">✓</span>Book-grounded answers</li>
+            <li><span class="feature-bullet">✓</span>Point-wise explanations</li>
+            <li><span class="feature-bullet">✓</span>Exam-oriented responses</li>
+            <li><span class="feature-bullet">✓</span>Offline AI support</li>
+          </ul>
+        </div>
+        <div class="hero-image-container">
+          <div class="image-frame">
+            <img src="images/nataraj.png" alt="Nataraj Statue" class="hero-image">
+          </div>
+        </div>
+      </header>
+
+      <!-- Login Form -->
+      <div class="login-card" id="loginCard">
+        <h2 class="login-card-title">Welcome Back</h2>
+        <p class="login-card-subtitle">Sign in to start your study session</p>
+        <form id="loginForm" class="login-form" autocomplete="off">
+          <div class="login-field">
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" placeholder="Enter your username" required autocomplete="username" />
+          </div>
+          <div class="login-field">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="Enter your password" required
+              autocomplete="current-password" />
+          </div>
+          <p id="loginError" class="login-error hidden"></p>
+          <button type="submit" class="login-submit-btn" id="loginSubmitBtn">Sign In</button>
+        </form>
+        <div class="login-links">
+          <button type="button" class="login-link-btn" id="showRegisterBtn">Create New Account</button>
+          <button type="button" class="login-link-btn" id="showForgotBtn">Forgot Password?</button>
+        </div>
+      </div>
+
+      <!-- Registration Form -->
+      <div class="login-card hidden" id="registerCard">
+        <h2 class="login-card-title">Create Account</h2>
+        <p class="login-card-subtitle">Join Nritya.ai and start learning</p>
+        <form id="registerForm" class="login-form" autocomplete="off">
+          <div class="login-field">
+            <label for="regFullName">Full Name</label>
+            <input type="text" id="regFullName" placeholder="Your full name" required />
+          </div>
+          <div class="login-field">
+            <label for="regEmail">Email</label>
+            <input type="email" id="regEmail" placeholder="Your email address" required />
+          </div>
+          <div class="login-field">
+            <label for="regUsername">Username</label>
+            <input type="text" id="regUsername" placeholder="Choose a username" required autocomplete="username" />
+          </div>
+          <div class="login-field">
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" placeholder="Choose a password" required
+              autocomplete="new-password" />
+          </div>
+          <div class="login-field">
+            <label for="regConfirmPassword">Confirm Password</label>
+            <input type="password" id="regConfirmPassword" placeholder="Confirm your password" required
+              autocomplete="new-password" />
+          </div>
+          <div class="login-field">
+            <label for="regRole">Role</label>
+            <select id="regRole">
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+            </select>
+          </div>
+          <p id="registerError" class="login-error hidden"></p>
+          <button type="submit" class="login-submit-btn" id="registerSubmitBtn">Create Account</button>
+        </form>
+        <div class="login-links">
+          <button type="button" class="login-link-btn" id="showLoginFromRegBtn">Back to Sign In</button>
+        </div>
+      </div>
+
+      <!-- Forgot Password Form -->
+      <div class="login-card hidden" id="forgotCard">
+        <h2 class="login-card-title">Forgot Password</h2>
+        <p class="login-card-subtitle">Enter your username or email to recover your account</p>
+        <form id="forgotForm" class="login-form" autocomplete="off">
+          <div class="login-field">
+            <label for="forgotIdentifier">Username or Email</label>
+            <input type="text" id="forgotIdentifier" placeholder="Enter username or email" required />
+          </div>
+          <p id="forgotError" class="login-error hidden"></p>
+          <p id="forgotSuccess" class="login-success hidden"></p>
+          <button type="submit" class="login-submit-btn" id="forgotSubmitBtn">Recover Account</button>
+        </form>
+        <div class="login-links">
+          <button type="button" class="login-link-btn" id="showLoginFromForgotBtn">Back to Sign In</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Main App Wrapper (hidden until login) -->
+  <div class="app-container app-hidden" id="appContainer">
+
+    <!-- Mobile Navigation Bar (visible only on small viewports) -->
+    <header class="mobile-nav">
+      <button id="menuToggleBtn" class="menu-toggle-btn" aria-label="Toggle Menu">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor" />
+        </svg>
+      </button>
+      <span class="mobile-brand-title">NRITYA.AI</span>
+    </header>
+
+    <!-- Sidebar Column (fixed on desktop, toggleable drawer on mobile) -->
+    <aside class="sidebar" id="sidebarMenu">
+      <div class="sidebar-top">
+        <div class="brand">
+          <svg class="brand-logo" viewBox="0 0 100 100" width="40" height="40">
+            <path d="M 50 12 C 32 32, 28 55, 50 88 C 72 55, 68 32, 50 12 Z" fill="#d4af37" />
+            <path d="M 50 32 C 15 42, 10 65, 50 88 C 90 65, 85 42, 50 32 Z" fill="#ffffff" opacity="0.9" />
+            <circle cx="50" cy="88" r="6" fill="#d4af37" />
+          </svg>
+          <div class="brand-text">
+            <h1 class="brand-title">NRITYA.AI</h1>
+            <p class="brand-tagline">Bharatanatyam Exam Assistant</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="sidebar-menu">
+        <button type="button" class="nav-item active" data-tab="ask">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path
+              d="M19 2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h4l3 3 3-3h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H7v-2h10v2zm0-3H7V9h10v2zm0-3H7V6h10v2z"
+              fill="currentColor" />
+          </svg>
+          <span>Ask Question</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="history">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path
+              d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z"
+              fill="currentColor" />
+          </svg>
+          <span>History</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="saved">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" fill="currentColor" />
+          </svg>
+          <span>Saved Notes</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer Controls -->
+      <div class="sidebar-bottom">
+        <div class="sidebar-mandala">
+          <svg viewBox="0 0 100 100" width="100%" height="80">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.1" />
+            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.1" />
+            <g stroke="currentColor" stroke-width="0.5" opacity="0.15" fill="none">
+              <path d="M 50 5 L 50 95" />
+              <path d="M 5 50 L 95 50" />
+              <path d="M 18 18 L 82 82" />
+              <path d="M 18 82 L 82 18" />
+              <path d="M 50 50 C 50 35, 40 30, 50 20 C 60 30, 50 35, 50 50 Z" />
+              <path d="M 50 50 C 50 65, 60 70, 50 80 C 40 70, 50 65, 50 50 Z" />
+              <path d="M 50 50 C 35 50, 30 40, 20 50 C 30 60, 35 50, 50 50 Z" />
+              <path d="M 50 50 C 65 50, 70 60, 80 50 C 70 40, 65 50, 50 50 Z" />
+            </g>
+            <circle cx="50" cy="50" r="4" fill="currentColor" opacity="0.15" />
+          </svg>
+        </div>
+
+        <div class="theme-switcher">
+          <span class="theme-label">Dark Theme</span>
+          <label class="switch" for="themeToggle">
+            <input type="checkbox" id="themeToggle" aria-label="Toggle dark theme">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="sidebar-profile-card" aria-label="User profile">
+          <div class="sidebar-profile-avatar" id="sidebarProfileAvatar" aria-hidden="true">U</div>
+          <div class="sidebar-profile-info">
+            <strong id="sidebarProfileName">Guest User</strong>
+            <span id="sidebarProfileRole">Student</span>
+          </div>
+          <button type="button" id="sidebarLogoutBtn" class="sidebar-logout-btn" aria-label="Logout" title="Logout">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path d="M10.09 15.59 11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59z" />
+              <path d="M19 3h-8v2h8v14h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Scrollable Panel -->
+    <main class="main-content">
+
+      <!-- ================= AI WORKSPACE (always visible) ================= -->
+      <div id="workspace" class="workspace-content">
+
+        <!-- Chat Conversation Section -->
+        <section class="chat-section card" id="chatSection">
+          <div class="chat-toolbar">
+            <h2 class="section-title chat-section-title">CONVERSATION</h2>
+            <div class="chat-toolbar-actions">
+              <div class="exam-mode-group" aria-label="Answer mode">
+                <button type="button" class="exam-mode-btn active" data-mode="short">Short Answer <span>2
+                    Marks</span></button>
+                <button type="button" class="exam-mode-btn" data-mode="medium">Medium Answer <span>5
+                    Marks</span></button>
+                <button type="button" class="exam-mode-btn" data-mode="long">Long Answer <span>10 Marks</span></button>
+                <button type="button" class="exam-mode-btn" data-mode="study">Detailed Study <span>Mode</span></button>
+              </div>
+              <label class="book-filter-control" for="bookFilterSelect">
+                <span>Book Filter</span>
+                <select id="bookFilterSelect" aria-label="Choose source book">
+                  <option value="all">All Books</option>
+                  <option value="theory">Theory Book</option>
+                  <option value="natyashastra">Natyashastra</option>
+                  <option value="abhinaya_darpana">Abhinaya Darpana</option>
+                  <option value="visharad_notes">Visharad Notes</option>
+                  <option value="prarambhik_notes">Prarambhik Notes</option>
+                  <option value="madhyama_notes">Madhyama Notes</option>
+                </select>
+              </label>
+              <div class="study-progress-pill" aria-label="Study progress">
+                <span>Topics Studied Today: <strong id="topicsTodayCount">0</strong></span>
+                <span>Questions Asked: <strong id="questionsAskedCount">0</strong></span>
+              </div>
+              <button type="button" id="newChatBtn" class="new-chat-btn" aria-label="Start new chat">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                </svg>
+                New Chat
+              </button>
+            </div>
+          </div>
+
+          <div class="knowledge-dashboard" id="knowledgeDashboard" aria-label="Knowledge base statistics">
+            <div class="knowledge-stat">
+              <span>Books Indexed</span>
+              <strong id="booksIndexedStat">-</strong>
+            </div>
+            <div class="knowledge-stat">
+              <span>Total Pages</span>
+              <strong id="pagesIndexedStat">-</strong>
+            </div>
+            <div class="knowledge-stat">
+              <span>Total Chunks</span>
+              <strong id="chunksStoredStat">-</strong>
+            </div>
+            <div class="knowledge-stat">
+              <span>Last Update</span>
+              <strong id="lastIndexUpdateStat">-</strong>
+            </div>
+          </div>
+
+          <div id="chatMessages" class="chat-messages" aria-live="polite">
+            <div class="chat-welcome" id="chatWelcome">
+              <div class="chat-welcome-icon" aria-hidden="true">✦</div>
+              <p class="chat-welcome-title">Welcome to Nritya.ai</p>
+              <p class="chat-welcome-text">Choose an exam mode and ask a Bharatanatyam theory question to begin.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ================= HISTORY TAB VIEW ================= -->
+      <div id="tabContent-history" class="tab-content">
+        <h2 class="tab-view-title">Session History</h2>
+        <p class="tab-view-subtitle">Review questions and answers from your current session.</p>
+        <div id="historyList" class="history-list">
+          <div class="history-empty">No questions asked yet. Answers will be logged here.</div>
+        </div>
+      </div>
+
+      <!-- ================= SAVED NOTES TAB VIEW ================= -->
+      <div id="tabContent-saved" class="tab-content">
+        <h2 class="tab-view-title">Saved Notes</h2>
+        <p class="tab-view-subtitle">Bookmarked answers and favorite questions from your study sessions.</p>
+        <section class="learning-split">
+          <div class="learning-panel">
+            <div class="learning-panel-header">
+              <h3>Bookmarked Answers</h3>
+            </div>
+            <div id="bookmarkedAnswersList" class="saved-list"></div>
+          </div>
+          <div class="learning-panel">
+            <div class="learning-panel-header">
+              <h3>Favorite Questions</h3>
+            </div>
+            <div id="favoriteQuestionsList" class="saved-list"></div>
+          </div>
+        </section>
+      </div>
+
+    </main>
+
+    <div id="sessionSummaryModal" class="session-summary-modal hidden" role="dialog" aria-modal="true"
+      aria-labelledby="sessionSummaryTitle">
+      <div class="session-summary-card">
+        <h2 id="sessionSummaryTitle">Session Summary</h2>
+        <div id="sessionSummaryBody" class="session-summary-body"></div>
+        <div class="session-summary-actions">
+          <button type="button" id="continueSessionBtn" class="answer-action-btn">Continue Studying</button>
+          <button type="button" id="confirmEndSessionBtn" class="answer-action-btn accent">End Session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fixed Chat Input Bar -->
+    <div class="chat-input-bar" id="chatInputBar">
+      <div class="chat-input-bar-inner">
+        <div class="chat-input-field">
+          <textarea id="questionInput" maxlength="500" rows="1" aria-label="Ask a Bharatanatyam question"
+            placeholder="Ask anything about Bharatanatyam theory..."></textarea>
+          <button id="submitBtn" type="button" aria-label="Send message">
+            <span id="spinner" class="spinner hidden" aria-hidden="true"></span>
+            <svg id="sendIcon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            </svg>
+          </button>
+        </div>
+        <p id="validationMsg" class="validation-msg hidden" role="alert">Please enter a Bharatanatyam question.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/script.js?v=3"></script>
+</body>
+
+</html>

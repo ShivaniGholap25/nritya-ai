@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nritya.ai Admin Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Outfit:wght@300..700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+
+<body>
+  <main class="admin-shell">
+    <section id="loginPanel" class="admin-login card auth-card">
+      <div class="auth-screen active" id="loginScreen">
+        <div>
+          <h1>NRITYA.AI</h1>
+          <p>Admin and Teacher Management Portal</p>
+        </div>
+        <label>
+          <span>Username</span>
+          <input id="adminUsername" type="text" autocomplete="username" required>
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="adminPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <button id="loginBtn" type="button" class="admin-primary-btn">Login</button>
+        <div class="auth-links">
+          <button id="showRegisterBtn" type="button">Create New Account</button>
+          <button id="showForgotBtn" type="button">Forgot Password?</button>
+        </div>
+        <p id="loginMessage" class="admin-message"></p>
+      </div>
+
+      <div class="auth-screen" id="registerScreen">
+        <div>
+          <h1>Create Account</h1>
+          <p>Register for role-based Nritya.ai access</p>
+        </div>
+        <div class="auth-form-grid">
+          <label>
+            <span>Full Name</span>
+            <input id="registerFullName" type="text" autocomplete="name" required>
+          </label>
+          <label>
+            <span>Email Address</span>
+            <input id="registerEmail" type="email" autocomplete="email" required>
+          </label>
+          <label>
+            <span>Username</span>
+            <input id="registerUsername" type="text" autocomplete="username" required>
+          </label>
+          <label>
+            <span>Role</span>
+            <select id="registerRole" required>
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="registerPassword" type="password" autocomplete="new-password" required>
+          </label>
+          <label>
+            <span>Confirm Password</span>
+            <input id="registerConfirmPassword" type="password" autocomplete="new-password" required>
+          </label>
+        </div>
+
+        <div id="studentExamSection" class="student-exam-section">
+          <h2>Bharatanatyam Examination Information</h2>
+          <p>This information helps Nritya.ai provide answers and study material appropriate to your examination level.
+          </p>
+          <div class="auth-form-grid">
+            <label>
+              <span>Current Examination Level</span>
+              <select id="examLevel">
+                <option>Prarambhik</option>
+                <option>Praveshika Pratham</option>
+                <option>Praveshika Purna</option>
+                <option>Madhyama Pratham</option>
+                <option>Madhyama Purna</option>
+                <option>Visharad Pratham</option>
+                <option>Visharad Purna</option>
+                <option>Alankar</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>
+              <span>Examination Board</span>
+              <select id="examBoard">
+                <option>Gandharva Mahavidyalaya</option>
+                <option>Akhil Bharatiya Gandharva Mahavidyalaya</option>
+                <option>University Curriculum</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>
+              <span>Expected Exam Date</span>
+              <input id="expectedExamDate" type="date">
+            </label>
+            <label>
+              <span>Years of Training</span>
+              <input id="yearsTraining" type="number" min="0" max="60" step="0.5">
+            </label>
+          </div>
+        </div>
+
+        <button id="registerBtn" type="button" class="admin-primary-btn">Create Account</button>
+        <div class="auth-links single">
+          <button id="backToLoginFromRegisterBtn" type="button">Back to Login</button>
+        </div>
+        <p id="registerMessage" class="admin-message"></p>
+      </div>
+
+      <div class="auth-screen" id="forgotScreen">
+        <div>
+          <h1>Reset Access</h1>
+          <p>Enter your username or email address</p>
+        </div>
+        <label>
+          <span>Username or Email</span>
+          <input id="forgotIdentifier" type="text" autocomplete="username">
+        </label>
+        <button id="forgotBtn" type="button" class="admin-primary-btn">Recover Account</button>
+        <div class="auth-links single">
+          <button id="backToLoginFromForgotBtn" type="button">Back to Login</button>
+        </div>
+        <p id="forgotMessage" class="admin-message"></p>
+      </div>
+    </section>
+
+    <section id="adminApp" class="admin-app hidden">
+      <header class="admin-header">
+        <div>
+          <h1>Nritya.ai Admin</h1>
+          <p id="roleLabel">Knowledge Base Management</p>
+        </div>
+        <div class="admin-header-actions">
+          <a class="admin-link" href="/">Student App</a>
+          <button id="logoutBtn" type="button" class="answer-action-btn">Logout</button>
+        </div>
+      </header>
+
+      <section class="admin-stat-grid">
+        <div class="admin-stat"><span>Total Books Indexed</span><strong id="adminBooksStat">0</strong></div>
+        <div class="admin-stat"><span>Total Pages Indexed</span><strong id="adminPagesStat">0</strong></div>
+        <div class="admin-stat"><span>Total Chunks</span><strong id="adminChunksStat">0</strong></div>
+        <div class="admin-stat"><span>Total Questions Asked</span><strong id="adminQuestionsStat">0</strong></div>
+        <div class="admin-stat wide"><span>Most Searched Topics</span><strong id="adminTopicsStat">None yet</strong>
+        </div>
+        <div class="admin-stat wide"><span>Last Database Update</span><strong id="adminUpdateStat">Unknown</strong>
+        </div>
+      </section>
+
+      <section class="admin-grid">
+        <div class="admin-panel">
+          <div class="admin-panel-header">
+            <h2>Upload Materials</h2>
+            <span>PDF, TXT, DOCX</span>
+          </div>
+          <div class="admin-upload-box">
+            <input id="materialFile" type="file" accept=".pdf,.txt,.docx">
+            <select id="materialCategory">
+              <option>General Theory</option>
+              <option>Prarambhik</option>
+              <option>Madhyama</option>
+              <option>Visharad</option>
+              <option>Natyashastra</option>
+              <option>Abhinaya</option>
+            </select>
+            <button id="uploadBtn" type="button" class="admin-primary-btn">Upload and Process</button>
+          </div>
+          <p id="uploadMessage" class="admin-message"></p>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-panel-header">
+            <h2>Backup and Restore</h2>
+            <span>Offline archive</span>
+          </div>
+          <div class="admin-action-row">
+            <button id="backupBtn" type="button" class="answer-action-btn accent admin-only">Backup Knowledge
+              Base</button>
+            <button id="exportBtn" type="button" class="answer-action-btn admin-only">Export FAISS Index</button>
+          </div>
+          <div class="admin-upload-box compact">
+            <input id="importFile" type="file" accept=".zip">
+            <button id="importBtn" type="button" class="answer-action-btn admin-only">Import FAISS Index</button>
+          </div>
+          <p id="backupMessage" class="admin-message"></p>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>Knowledge Base</h2>
+          <button id="reindexAllBtn" type="button" class="answer-action-btn accent admin-only">Reindex All</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Book Name</th>
+                <th>Category</th>
+                <th>Pages</th>
+                <th>Chunks</th>
+                <th>Upload Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="booksTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-grid">
+        <div class="admin-panel">
+          <div class="admin-panel-header">
+            <h2>Analytics</h2>
+            <span>Usage patterns</span>
+          </div>
+          <div id="analyticsList" class="admin-list"></div>
+        </div>
+        <div class="admin-panel">
+          <div class="admin-panel-header">
+            <h2>Role Permissions</h2>
+            <span>Access model</span>
+          </div>
+          <div class="admin-list">
+            <div><strong>Student</strong><span>Ask questions only</span></div>
+            <div><strong>Teacher</strong><span>Upload books and view analytics</span></div>
+            <div><strong>Admin</strong><span>Full access, delete, backup, restore</span></div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/admin.js"></script>
+</body>
+
+</html>
