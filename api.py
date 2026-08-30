@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from pathlib import Path
 from auth_core import authenticate_user, find_recovery_account, register_user
 from admin_core import (
     CATEGORIES,
@@ -26,6 +27,10 @@ from rag_core import get_answer_with_metadata, get_book_options, get_index_stats
 # Set offline mode for HuggingFace (optional - comment out if you want to download models on first run)
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
 # os.environ["HF_DATASETS_OFFLINE"] = "1"
+
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+BOOK_DIR = BASE_DIR / "books"
 
 app = FastAPI(title="Nritya.ai API")
 
@@ -234,7 +239,7 @@ async def admin_view_book(book_id: str, _session=Depends(require_role("teacher")
     book = next((item for item in get_registry() if item["id"] == book_id), None)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
-    path = Path("books") / book["filename"]
+    path = BOOK_DIR / book["filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=path, filename=book["filename"])
@@ -286,10 +291,10 @@ async def admin_import(file: UploadFile = File(...), _session=Depends(require_ro
 
 @app.get("/admin")
 async def admin_page():
-    return FileResponse("static/admin.html")
+    return FileResponse(STATIC_DIR / "admin.html")
 
 # Mount static files at root so static/index.html is served at '/'.
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn

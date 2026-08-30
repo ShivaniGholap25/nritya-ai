@@ -13,10 +13,11 @@ from typing import Any
 from PyPDF2 import PdfReader
 
 
-BOOK_DIR = Path("books")
-INDEX_DIR = Path("faiss_index")
-BACKUP_DIR = Path("backups")
-ADMIN_DATA_DIR = Path("admin_data")
+BASE_DIR = Path(__file__).resolve().parent
+BOOK_DIR = BASE_DIR / "books"
+INDEX_DIR = BASE_DIR / "faiss_index"
+BACKUP_DIR = BASE_DIR / "backups"
+ADMIN_DATA_DIR = BASE_DIR / "admin_data"
 BOOK_REGISTRY_FILE = ADMIN_DATA_DIR / "book_registry.json"
 ANALYTICS_FILE = ADMIN_DATA_DIR / "analytics.json"
 STATS_FILE = INDEX_DIR / "index_stats.json"

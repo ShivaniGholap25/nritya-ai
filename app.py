@@ -20,8 +20,9 @@ except ImportError:
     from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
-BOOK_DIR = Path("books")
-INDEX_DIR = Path("faiss_index")
+BASE_DIR = Path(__file__).resolve().parent
+BOOK_DIR = BASE_DIR / "books"
+INDEX_DIR = BASE_DIR / "faiss_index"
 STATS_FILE = INDEX_DIR / "index_stats.json"
 
 BOOK_SOURCES = [

@@ -19,6 +19,15 @@ backups/
 
 # Environment variables
 .env
+.env.*
+
+# Model cache
+.cache/
+.huggingface/
+
+# Python cache
+__pycache__/
+*.log
 
 # Python cache
 .pytest_cache/

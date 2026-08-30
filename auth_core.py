@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any
 
 
-AUTH_DATA_DIR = Path("admin_data")
+BASE_DIR = Path(__file__).resolve().parent
+AUTH_DATA_DIR = BASE_DIR / "admin_data"
 USERS_FILE = AUTH_DATA_DIR / "users.json"
 ROLES = {"student", "teacher", "admin"}
 EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")

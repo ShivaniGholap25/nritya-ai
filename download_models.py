@@ -4,7 +4,9 @@ Run this once while online:
     python download_models.py
 """
 
+import os
 import sys
+from pathlib import Path
 
 from sentence_transformers import SentenceTransformer
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
@@ -12,13 +14,17 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 GENERATION_MODEL = "google/flan-t5-base"
+HF_CACHE_DIR = Path(os.getenv("HF_HOME", str(Path(__file__).resolve().parent / ".cache" / "huggingface"))).expanduser().resolve()
+os.environ.setdefault("HF_HOME", str(HF_CACHE_DIR))
+os.environ.setdefault("TRANSFORMERS_CACHE", str(HF_CACHE_DIR / "transformers"))
+os.environ.setdefault("HF_DATASETS_CACHE", str(HF_CACHE_DIR / "datasets"))
 
 
 def download_embedding_model() -> SentenceTransformer:
     print("[1/4] Downloading embedding model:", EMBEDDING_MODEL)
     print("      This may take a few minutes...")
 
-    model = SentenceTransformer(EMBEDDING_MODEL)
+    model = SentenceTransformer(EMBEDDING_MODEL, cache_folder=str(HF_CACHE_DIR))
 
     print("      Running embedding test inference...")
     test_embeddings = model.encode(
@@ -33,10 +39,10 @@ def download_embedding_model() -> SentenceTransformer:
 def download_generation_model() -> tuple[AutoTokenizer, AutoModelForSeq2SeqLM]:
     print("[2/4] Downloading generation model:", GENERATION_MODEL)
     print("      Downloading tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(GENERATION_MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(GENERATION_MODEL, cache_dir=str(HF_CACHE_DIR / "transformers"))
 
     print("      Downloading seq2seq model weights...")
-    model = AutoModelForSeq2SeqLM.from_pretrained(GENERATION_MODEL)
+    model = AutoModelForSeq2SeqLM.from_pretrained(GENERATION_MODEL, cache_dir=str(HF_CACHE_DIR / "transformers"))
 
     print("      Running generation test inference...")
     prompt = "Explain adavu in one short bullet point."

@@ -11,10 +11,15 @@ _embeddings = None
 _generator = None
 _tokenizer = None
 
-INDEX_DIR = Path("faiss_index")
+BASE_DIR = Path(__file__).resolve().parent
+INDEX_DIR = BASE_DIR / "faiss_index"
 STATS_FILE = INDEX_DIR / "index_stats.json"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 GENERATION_MODEL = "google/flan-t5-base"
+HF_CACHE_DIR = Path(os.getenv("HF_HOME", str(BASE_DIR / ".cache" / "huggingface"))).expanduser().resolve()
+os.environ.setdefault("HF_HOME", str(HF_CACHE_DIR))
+os.environ.setdefault("TRANSFORMERS_CACHE", str(HF_CACHE_DIR / "transformers"))
+os.environ.setdefault("HF_DATASETS_CACHE", str(HF_CACHE_DIR / "datasets"))
 
 BOOK_OPTIONS = [
     {"key": "all", "label": "All Books"},
@@ -56,11 +61,15 @@ def load_knowledge_base():
     global _db, _embeddings, _generator, _tokenizer
 
     if _db is None or _embeddings is None:
-        offline_mode = os.getenv("TRANSFORMERS_OFFLINE", "1") != "0"
+        offline_mode = str(os.getenv("TRANSFORMERS_OFFLINE", "0")).strip().lower() in {"1", "true", "yes", "on"}
         if offline_mode:
             os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
             os.environ.setdefault("HF_DATASETS_OFFLINE", "1")
             os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        else:
+            os.environ.pop("TRANSFORMERS_OFFLINE", None)
+            os.environ.pop("HF_DATASETS_OFFLINE", None)
+            os.environ.pop("HF_HUB_OFFLINE", None)
 
         from langchain_community.vectorstores import FAISS
         from langchain_huggingface import HuggingFaceEmbeddings
@@ -72,6 +81,7 @@ def load_knowledge_base():
             _embeddings = HuggingFaceEmbeddings(
                 model_name=EMBEDDING_MODEL,
                 model_kwargs=model_kwargs,
+                cache_folder=str(HF_CACHE_DIR),
             )
 
             _db = FAISS.load_local(
@@ -92,13 +102,16 @@ def load_knowledge_base():
             from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
             print(f"Loading generation model: {GENERATION_MODEL}...")
+            offline_mode = str(os.getenv("TRANSFORMERS_OFFLINE", "0")).strip().lower() in {"1", "true", "yes", "on"}
             _tokenizer = AutoTokenizer.from_pretrained(
                 GENERATION_MODEL,
-                local_files_only=os.getenv("TRANSFORMERS_OFFLINE", "1") != "0",
+                local_files_only=offline_mode,
+                cache_dir=str(HF_CACHE_DIR / "transformers"),
             )
             _generator = AutoModelForSeq2SeqLM.from_pretrained(
                 GENERATION_MODEL,
-                local_files_only=os.getenv("TRANSFORMERS_OFFLINE", "1") != "0",
+                local_files_only=offline_mode,
+                cache_dir=str(HF_CACHE_DIR / "transformers"),
             )
     except Exception as exc:
         print(f"Generation model unavailable; falling back to rule-based answers: {exc}")
