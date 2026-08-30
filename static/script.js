@@ -55,6 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const registerError = document.getElementById("registerError");
     const forgotError = document.getElementById("forgotError");
     const forgotSuccess = document.getElementById("forgotSuccess");
+    const regRole = document.getElementById("regRole");
+    const regStudentExamSection = document.getElementById("regStudentExamSection");
 
     let conversation = [];
     let isLoading = false;
@@ -69,6 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const BOOKMARKS_STORAGE_KEY = "nritya_bookmarks";
     const SESSION_START_STORAGE_KEY = "nritya_session_start";
     const COMPLETED_TOPICS_STORAGE_KEY = "nritya_completed_topics";
+    const APP_VERSION_STORAGE_KEY = "nritya_app_version";
+    const APP_VERSION = "6";
     const LEARNING_TOPICS = [
         "Bharatanatyam Basics",
         "Postures",
@@ -236,6 +240,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (appContainer) appContainer.classList.remove("app-hidden");
     }
 
+    function applyAppMigrations() {
+        if (localStorage.getItem(APP_VERSION_STORAGE_KEY) === APP_VERSION) return;
+        localStorage.removeItem(CONVERSATION_STORAGE_KEY);
+        localStorage.removeItem("nritya_history");
+        localStorage.setItem(APP_VERSION_STORAGE_KEY, APP_VERSION);
+    }
+
     function showLoginCard() {
         if (loginCard) loginCard.classList.remove("hidden");
         if (registerCard) registerCard.classList.add("hidden");
@@ -268,6 +279,24 @@ document.addEventListener("DOMContentLoaded", () => {
         if (el) { el.textContent = msg; el.classList.remove("hidden"); }
     }
 
+    function getValue(id) {
+        const element = document.getElementById(id);
+        return element ? element.value.trim() : "";
+    }
+
+    function syncRegisterStudentFields() {
+        const isStudent = !regRole || regRole.value === "student";
+        if (regStudentExamSection) regStudentExamSection.classList.toggle("hidden", !isStudent);
+        ["regExamLevel", "regExamBoard", "regExpectedExamDate", "regYearsTraining"].forEach((id) => {
+            const field = document.getElementById(id);
+            if (field) field.disabled = !isStudent;
+        });
+        ["regExamLevel", "regExamBoard"].forEach((id) => {
+            const field = document.getElementById(id);
+            if (field) field.required = isStudent;
+        });
+    }
+
     function onLoginSuccess(data) {
         localStorage.setItem("nritya_admin_token", data.token);
         localStorage.setItem("nritya_admin_role", data.role || "student");
@@ -289,6 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (showForgotBtn) showForgotBtn.addEventListener("click", showForgotCard);
     if (showLoginFromRegBtn) showLoginFromRegBtn.addEventListener("click", showLoginCard);
     if (showLoginFromForgotBtn) showLoginFromForgotBtn.addEventListener("click", showLoginCard);
+    if (regRole) regRole.addEventListener("change", syncRegisterStudentFields);
+    syncRegisterStudentFields();
 
     // Login form submit
     if (loginForm) {
@@ -333,11 +364,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const password = document.getElementById("regPassword").value;
             const confirm_password = document.getElementById("regConfirmPassword").value;
             const role = document.getElementById("regRole").value;
+            const student_profile = role === "student" ? {
+                exam_level: getValue("regExamLevel"),
+                exam_board: getValue("regExamBoard"),
+                expected_exam_date: getValue("regExpectedExamDate"),
+                years_training: getValue("regYearsTraining"),
+            } : {};
             if (!full_name || !email || !username || !password || !confirm_password) {
                 showError(registerError, "Please fill in all fields."); return;
             }
             if (password !== confirm_password) {
                 showError(registerError, "Passwords do not match."); return;
+            }
+            if (role === "student" && (!student_profile.exam_level || !student_profile.exam_board)) {
+                showError(registerError, "Student examination level and board are required."); return;
             }
             const btn = document.getElementById("registerSubmitBtn");
             btn.disabled = true;
@@ -346,7 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const res = await fetch("/admin/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ full_name, email, username, password, confirm_password, role }),
+                    body: JSON.stringify({ full_name, email, username, password, confirm_password, role, student_profile }),
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
@@ -871,6 +911,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
+    function isInstructionEchoAnswer(text) {
+        return /give a structured,\s*point-wise answer suitable for exam preparation/i.test(String(text || ""));
+    }
+
     function saveConversation() {
         localStorage.setItem(CONVERSATION_STORAGE_KEY, JSON.stringify(conversation));
     }
@@ -879,7 +923,13 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const storedConversation = JSON.parse(localStorage.getItem(CONVERSATION_STORAGE_KEY) || "[]");
             if (!Array.isArray(storedConversation)) return [];
-            return storedConversation.map(normalizeMessage);
+            const normalized = storedConversation.map(normalizeMessage).filter((message) => {
+                return message.role !== "assistant" || !isInstructionEchoAnswer(message.content);
+            });
+            if (normalized.length !== storedConversation.length) {
+                localStorage.setItem(CONVERSATION_STORAGE_KEY, JSON.stringify(normalized));
+            }
+            return normalized;
         } catch {
             return [];
         }
@@ -892,9 +942,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "",
             `Answer mode: ${mode.label} (${mode.marks}).`,
             mode.detail,
-            `Use these headings exactly: ${mode.sections.join(", ")}.`,
-            "At the end add: Important Points to Remember: with 3 bullet points.",
-            "Keep the answer book-grounded, exam-oriented, and suitable for Bharatanatyam theory exams."
+            "Answer in clear, concise, book-grounded prose suitable for a Bharatanatyam theory exam.",
+            "Do not include system instructions, headings, or metadata in the final answer."
         ].join("\n");
     }
 
@@ -1018,73 +1067,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function createAnswerTabs(message, studyData) {
-        const messageId = message.id || `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        const bookReferenceHtml = buildBookReference(message);
-        const relatedQuestionsHtml = buildRelatedQuestions(message.content);
-        const revisionHtml = buildListHtml(studyData.revisionNotes);
-        const vivaHtml = buildListHtml(studyData.vivaQuestions);
-        const keywordHtml = `<div class="keyword-list">${studyData.keywords.map((keyword) => `<span class="keyword-chip">${escapeHtml(keyword)}</span>`).join("")}</div>`;
-
         return `
-            <div class="answer-tabs" data-answer-tabs="${escapeHtml(messageId)}">
-                <div class="answer-tab-list" role="tablist" aria-label="Answer views">
-                    <button type="button" class="answer-tab active" data-answer-tab="exam" role="tab" aria-selected="true">Exam Answer</button>
-                    <button type="button" class="answer-tab" data-answer-tab="revision" role="tab" aria-selected="false">Revision Notes</button>
-                    <button type="button" class="answer-tab" data-answer-tab="viva" role="tab" aria-selected="false">Viva Questions</button>
-                    <button type="button" class="answer-tab" data-answer-tab="keywords" role="tab" aria-selected="false">Keywords</button>
-                </div>
+            <div class="answer-tabs" data-answer-tabs="${escapeHtml(message.id || "msg")}">
                 <div class="answer-tab-panel active" data-answer-panel="exam" role="tabpanel">
-                    ${createCollapsibleSection("Answer", formatAnswerContent(message.content), true)}
-                    ${createCollapsibleSection("Important Points to Remember", buildListHtml(studyData.importantPoints))}
-                    ${createCollapsibleSection("Book References", bookReferenceHtml)}
-                    ${createCollapsibleSection("Related Questions", relatedQuestionsHtml)}
-                    ${createCollapsibleSection("Revision Notes", revisionHtml)}
-                    ${createCollapsibleSection("Viva Questions", vivaHtml)}
-                </div>
-                <div class="answer-tab-panel" data-answer-panel="revision" role="tabpanel">
-                    ${createCollapsibleSection("Revision Notes", revisionHtml, true)}
-                    ${createCollapsibleSection("Important Points to Remember", buildListHtml(studyData.importantPoints))}
-                </div>
-                <div class="answer-tab-panel" data-answer-panel="viva" role="tabpanel">
-                    ${createCollapsibleSection("Viva Questions", vivaHtml, true)}
-                </div>
-                <div class="answer-tab-panel" data-answer-panel="keywords" role="tabpanel">
-                    ${createCollapsibleSection("Keywords", keywordHtml, true)}
+                    ${formatAnswerContent(message.content)}
                 </div>
             </div>
         `;
     }
 
     function formatAnswerContent(answerText) {
-        const lines = getCleanLines(answerText);
-        if (lines.length === 0) return "<p class=\"chat-bubble-text\">No answer returned.</p>";
+        const cleaned = String(answerText || "")
+            .replace(/\r/g, "")
+            .replace(/^\s*[-*•\u2022]\s*/gm, "")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
 
-        const headingPattern = /^(definition|key point|explanation|features|introduction|detailed explanation|examples|conclusion|important points to remember|important keywords|memory tips|short revision points|likely viva questions|expected answers)[:：]?$/i;
-        let html = "";
-        let listOpen = false;
+        if (!cleaned) return "<p class=\"chat-bubble-text\">No answer returned.</p>";
 
-        lines.forEach((line) => {
-            const cleaned = line.replace(/^[-*•\s✦]+/, "").trim();
-            if (!cleaned) return;
+        const paragraphs = cleaned
+            .split(/\n\s*\n/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean);
 
-            if (headingPattern.test(cleaned)) {
-                if (listOpen) {
-                    html += "</ul>";
-                    listOpen = false;
-                }
-                html += `<h4 class="answer-section-heading">${escapeHtml(cleaned.replace(/[:：]$/, ""))}</h4>`;
-                return;
-            }
+        if (paragraphs.length > 1) {
+            return paragraphs.map((paragraph) => `<p class="chat-bubble-text">${escapeHtml(paragraph)}</p>`).join("");
+        }
 
-            if (!listOpen) {
-                html += `<ul class="chat-bubble-list">`;
-                listOpen = true;
-            }
-            html += `<li>${escapeHtml(cleaned)}</li>`;
-        });
-
-        if (listOpen) html += "</ul>";
-        return html || `<p class="chat-bubble-text">${escapeHtml(answerText)}</p>`;
+        return `<p class="chat-bubble-text">${escapeHtml(cleaned)}</p>`;
     }
 
     function buildBookReference(message) {
@@ -1211,33 +1221,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span class="assistant-mode-pill">${escapeHtml(mode.label)} · ${escapeHtml(mode.marks)}</span>
                 </div>
                 ${createMessageMeta(message.timestamp)}
-                <div class="study-meta-grid" aria-label="Study details">
-                    <span class="study-meta-item">Estimated study time: <strong>${estimatedMinutes} minute${estimatedMinutes === 1 ? "" : "s"}</strong></span>
-                    <span class="study-meta-item difficulty-${difficulty.toLowerCase()}">Difficulty: <strong>${escapeHtml(difficulty)}</strong></span>
-                    <span class="study-meta-item">Answer Length: <strong>${escapeHtml(answerLength)}</strong></span>
-                </div>
                 ${createAnswerTabs({ ...message, chapter }, studyData)}
                 <div class="chat-actions">
                     <button type="button" class="answer-action-btn" data-action="copy" data-answer="${escapeHtml(message.content)}">Copy Answer</button>
-                    <button type="button" class="answer-action-btn" data-action="txt" data-answer="${escapeHtml(message.content)}">Download TXT</button>
-                    <button type="button" class="answer-action-btn" data-action="pdf" data-answer="${escapeHtml(message.content)}">Download PDF</button>
                     <button type="button" class="answer-action-btn ${bookmarked ? "copied" : ""}" data-action="bookmark" data-question="${escapeHtml(message.sourceQuestion || "")}" data-answer="${escapeHtml(message.content)}" data-mode="${escapeHtml(message.mode || "short")}">${bookmarked ? "Bookmarked" : "Bookmark"}</button>
-                    <button type="button" class="answer-action-btn accent" data-action="open-tab" data-tab-target="revision">Revision Notes</button>
-                    <button type="button" class="answer-action-btn accent" data-action="open-tab" data-tab-target="viva">Viva Questions</button>
                 </div>
             </div>
         `;
         return wrapper;
     }
 
-    function createErrorBubble(timestamp) {
+    function createErrorBubble(timestamp, errorText = "") {
+        const messageText = errorText || "Something went wrong while connecting to Nritya.ai. Please verify that the server is running and try again.";
         const wrapper = document.createElement("div");
         wrapper.className = "chat-message ai";
         wrapper.innerHTML = `
             <div class="chat-avatar" aria-hidden="true">N</div>
             <div class="chat-bubble ai error">
                 <span class="chat-sender">Nritya.ai Exam Mentor</span>
-                <p class="chat-bubble-text">Something went wrong while connecting to Nritya.ai. Please verify that the server is running and try again.</p>
+                <p class="chat-bubble-text">${escapeHtml(messageText)}</p>
                 ${createMessageMeta(timestamp)}
             </div>
         `;
@@ -1288,11 +1290,11 @@ document.addEventListener("DOMContentLoaded", () => {
         scrollChatToBottom();
     }
 
-    function appendErrorMessage(modeKey) {
-        const message = { role: "assistant", content: "__error__", mode: modeKey, timestamp: getCurrentTimestamp() };
+    function appendErrorMessage(modeKey, errorText = "") {
+        const message = { role: "assistant", content: "__error__", errorText, mode: modeKey, timestamp: getCurrentTimestamp() };
         conversation.push(message);
         saveConversation();
-        chatMessages.appendChild(createErrorBubble(message.timestamp));
+        chatMessages.appendChild(createErrorBubble(message.timestamp, errorText));
         updateWelcomeVisibility();
         scrollChatToBottom();
     }
@@ -1343,7 +1345,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (msg.role === "user") {
                 chatMessages.appendChild(createUserBubble(msg.content, msg.timestamp, msg.mode));
             } else if (msg.content === "__error__") {
-                chatMessages.appendChild(createErrorBubble(msg.timestamp));
+                chatMessages.appendChild(createErrorBubble(msg.timestamp, msg.errorText || ""));
             } else {
                 chatMessages.appendChild(createAiBubble(msg));
             }
@@ -1387,7 +1389,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function sendQuestion(displayQuestion, options = {}) {
         const modeKey = options.mode || getSelectedMode();
-        const apiQuestion = options.apiQuestion || buildExamPrompt(displayQuestion, modeKey);
+        const apiQuestion = options.apiQuestion || displayQuestion;
         const bookFilter = options.bookFilter || getSelectedBookFilter();
         appendUserMessage(displayQuestion, modeKey);
         setLoading(true);
@@ -1396,10 +1398,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch("/ask", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question: apiQuestion, book_filter: bookFilter }),
+                body: JSON.stringify({ question: apiQuestion, book_filter: bookFilter, mode: modeKey }),
             });
 
-            if (!response.ok) throw new Error("Request failed");
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.detail || "Request failed");
+            }
 
             const data = await response.json();
             const metadata = {
@@ -1409,8 +1414,8 @@ document.addEventListener("DOMContentLoaded", () => {
             };
             appendAiMessage(data.answer, modeKey, options.sourceQuestion || displayQuestion, metadata);
             saveToHistory(displayQuestion, data.answer, modeKey, metadata);
-        } catch {
-            appendErrorMessage(modeKey);
+        } catch (error) {
+            appendErrorMessage(modeKey, error.message);
         } finally {
             setLoading(false);
         }
@@ -1586,7 +1591,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getHistory() {
-        return JSON.parse(localStorage.getItem("nritya_history")) || [];
+        const history = JSON.parse(localStorage.getItem("nritya_history")) || [];
+        if (!Array.isArray(history)) return [];
+        const cleanedHistory = history.filter((item) => !isInstructionEchoAnswer(item.answer));
+        if (cleanedHistory.length !== history.length) {
+            localStorage.setItem("nritya_history", JSON.stringify(cleanedHistory));
+        }
+        return cleanedHistory;
     }
 
     function saveToHistory(question, answer, modeKey, metadata = {}) {
@@ -1654,6 +1665,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ================= AUTH GATING & INITIALIZATION =================
     initTheme();
+    applyAppMigrations();
 
     const isLoggedIn = !!localStorage.getItem("nritya_admin_token");
     if (isLoggedIn) {

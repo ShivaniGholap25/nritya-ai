@@ -2549,6 +2549,20 @@ button#submitBtn:disabled {
     opacity: 0.6;
 }
 
+.register-student-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-page);
+    padding: 14px;
+}
+
+.register-student-section.hidden {
+    display: none;
+}
+
 .login-error {
     color: #c0392b;
     font-size: 0.88rem;

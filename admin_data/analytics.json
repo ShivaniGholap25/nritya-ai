@@ -1,19 +1,46 @@
 {
-  "total_questions": 4,
+  "total_questions": 34,
   "questions": {
     "Bharatanatyam exam preparation question: who is inventer of bharatnatyam?\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.\nUs": 1,
     "Bharatanatyam exam preparation question: Who is the author of Abhinaya Darpana?\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 wor": 1,
-    "Bharatanatyam exam preparation question: What is Bharatanatyam?\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.\nUse these he": 2
+    "Bharatanatyam exam preparation question: What is Bharatanatyam?\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.\nUse these he": 2,
+    "what is bharatanatyam": 2,
+    "Bharatanatyam exam preparation question: what is bharatnatyam\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.\nUse these head": 1,
+    "Bharatanatyam exam preparation question: Explain Aramandi.\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.\nUse these heading": 1,
+    "Bharatanatyam exam preparation question: what is bharatanatyam\n\nAnswer mode: Short Answer (2 Marks).\nWrite a concise 2-mark answer in 60-90 words.": 1,
+    "Explain Aramandi.": 2,
+    "Explain Murumandi.": 1,
+    "explain what is bharatnatyam": 1,
+    "bharatnatyam?": 1,
+    "murumandi?": 3,
+    "What is bharatnatyam?": 2,
+    "aramandi?": 3,
+    "What is Aramandi?": 3,
+    "What is Bharatnatyam?": 1,
+    "Explain Mudras": 1,
+    "Mudras?": 1,
+    "What is Bharatanatyam?": 1,
+    "Explain the importance of Aramandi in Bharatanatyam.": 1,
+    "What is Aramandi in Bharatanatyam?": 1,
+    "what is bharatnatyam?": 1,
+    "mudras": 1,
+    "what is bharatnatyam": 1
   },
   "topics": {
-    "Theory Exams": 3,
-    "Abhinaya": 1
+    "Theory Exams": 5,
+    "Abhinaya": 1,
+    "General Theory": 10,
+    "Postures": 15,
+    "Mudras": 3
   },
   "books": {
-    "theory.pdf": 2
+    "theory.pdf": 27
   },
   "daily_usage": {
     "2026-07-04": 3,
-    "2026-07-15": 1
+    "2026-07-15": 1,
+    "2026-08-25": 13,
+    "2026-08-26": 16,
+    "2026-08-30": 1
   }
 }

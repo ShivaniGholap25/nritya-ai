@@ -66,6 +66,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function setStudentSectionVisibility() {
         const isStudent = document.getElementById("registerRole").value === "student";
         document.getElementById("studentExamSection").classList.toggle("hidden", !isStudent);
+        ["examLevel", "examBoard", "expectedExamDate", "yearsTraining"].forEach((id) => {
+            document.getElementById(id).disabled = !isStudent;
+        });
+        ["examLevel", "examBoard"].forEach((id) => {
+            document.getElementById(id).required = isStudent;
+        });
     }
 
     function showApp() {

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Outfit:wght@300..700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=3" />
+  <link rel="stylesheet" href="/style.css?v=4" />
 </head>
 
 <body>
@@ -94,6 +94,39 @@
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
             </select>
+          </div>
+          <div id="regStudentExamSection" class="register-student-section">
+            <div class="login-field">
+              <label for="regExamLevel">Current Examination Level</label>
+              <select id="regExamLevel">
+                <option>Prarambhik</option>
+                <option>Praveshika Pratham</option>
+                <option>Praveshika Purna</option>
+                <option>Madhyama Pratham</option>
+                <option>Madhyama Purna</option>
+                <option>Visharad Pratham</option>
+                <option>Visharad Purna</option>
+                <option>Alankar</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="login-field">
+              <label for="regExamBoard">Examination Board</label>
+              <select id="regExamBoard">
+                <option>Gandharva Mahavidyalaya</option>
+                <option>Akhil Bharatiya Gandharva Mahavidyalaya</option>
+                <option>University Curriculum</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="login-field">
+              <label for="regExpectedExamDate">Expected Exam Date</label>
+              <input type="date" id="regExpectedExamDate" />
+            </div>
+            <div class="login-field">
+              <label for="regYearsTraining">Years of Training</label>
+              <input type="number" id="regYearsTraining" min="0" max="60" step="0.5" />
+            </div>
           </div>
           <p id="registerError" class="login-error hidden"></p>
           <button type="submit" class="login-submit-btn" id="registerSubmitBtn">Create Account</button>
@@ -359,7 +392,7 @@
 
   </div>
 
-  <script src="/script.js?v=3"></script>
+  <script src="/script.js?v=6"></script>
 </body>
 
 </html>

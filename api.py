@@ -1,3 +1,4 @@
+import os
 import secrets
 from pathlib import Path
 
@@ -40,6 +41,7 @@ app.add_middleware(
 class QuestionRequest(BaseModel):
     question: str
     book_filter: str = "all"
+    mode: str = "short"
 
 class AnswerResponse(BaseModel):
     answer: str
@@ -100,7 +102,7 @@ async def ask_question(request: QuestionRequest):
         raise HTTPException(status_code=400, detail="Question cannot be empty")
     
     try:
-        result = get_answer_with_metadata(request.question, request.book_filter)
+        result = get_answer_with_metadata(request.question, request.book_filter, request.mode)
         record_question(request.question, result.get("retrieval", {}))
         return AnswerResponse(**result)
     
@@ -292,9 +294,8 @@ app.mount("/", StaticFiles(directory="static", html=True), name="static")
 if __name__ == "__main__":
     import uvicorn
 
-    # Explicit host/port so we can print a clear startup message
     host = "0.0.0.0"
-    port = 8000
+    port = int(os.getenv("PORT", "8001"))
 
-    print(f"Starting Nritya.ai API — open http://{host}:{port}/ in your browser")
+    print(f"Starting Nritya.ai API — open http://localhost:{port}/ in your browser")
     uvicorn.run(app, host=host, port=port)

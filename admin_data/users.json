@@ -88,5 +88,60 @@
     "created_at": "2026-07-15T23:06:45",
     "salt": "190265727ff40ab6d5ed763e3b2ac9d5",
     "password_hash": "8b3d4d28e58391acce508d57a257970fd6bd2d93c2275afaf68c2f91bff850be"
+  },
+  "debss": {
+    "username": "debss",
+    "full_name": "devika",
+    "email": "devika@gmail.com",
+    "role": "teacher",
+    "student_profile": {},
+    "created_at": "2026-08-25T16:19:21",
+    "salt": "d2711d7ebb13fbceb04606007f3432ba",
+    "password_hash": "923d1c0231126e75e9a90256ac8fa157072fbb119007890c91e5ce0f34b4d4a2"
+  },
+  "shitt": {
+    "username": "shitt",
+    "full_name": "shit",
+    "email": "shit@gmail.com",
+    "role": "student",
+    "student_profile": {
+      "exam_level": "Madhyama Pratham",
+      "exam_board": "Akhil Bharatiya Gandharva Mahavidyalaya",
+      "expected_exam_date": "2026-10-12",
+      "years_training": "2.5"
+    },
+    "created_at": "2026-08-25T18:24:12",
+    "salt": "db188cec9fc395a717c72b6aae8cf4d7",
+    "password_hash": "e89fdb94f0aa8b81ed9bc412bbc0ce4ee2a92f48ff186eb161a01664b234d812"
+  },
+  "shivani@gmail.com": {
+    "username": "shivani@gmail.com",
+    "full_name": "shivani",
+    "email": "shivani@gmail.com",
+    "role": "student",
+    "student_profile": {
+      "exam_level": "Prarambhik",
+      "exam_board": "Gandharva Mahavidyalaya",
+      "expected_exam_date": "2026-10-10",
+      "years_training": "7"
+    },
+    "created_at": "2026-08-26T10:09:05",
+    "salt": "cb3d21026bb14af7bb3333006d6d87a8",
+    "password_hash": "e146fe4c555986039ca712101f1b81cbd7a0d47f68d1e28166161c291502e21b"
+  },
+  "omgholap6789": {
+    "username": "omgholap6789",
+    "full_name": "OM",
+    "email": "omgholap9021@gmail.com",
+    "role": "student",
+    "student_profile": {
+      "exam_level": "Prarambhik",
+      "exam_board": "Gandharva Mahavidyalaya",
+      "expected_exam_date": "2026-10-10",
+      "years_training": "5"
+    },
+    "created_at": "2026-08-30T22:32:36",
+    "salt": "6034c20f0a6cfa47f4175321fad2e464",
+    "password_hash": "05249aa3eacd2487db87f2508bf70ca4d5b46113e731eac28ff72d16576af7de"
   }
 }

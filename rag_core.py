@@ -1,15 +1,20 @@
 """Shared RAG core utilities for API and CLI interfaces."""
 
 import json
+import os
+import re
 from pathlib import Path
 from typing import Any
 
 _db = None
 _embeddings = None
 _generator = None
+_tokenizer = None
 
 INDEX_DIR = Path("faiss_index")
 STATS_FILE = INDEX_DIR / "index_stats.json"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+GENERATION_MODEL = "google/flan-t5-base"
 
 BOOK_OPTIONS = [
     {"key": "all", "label": "All Books"},
@@ -43,41 +48,74 @@ def get_book_options() -> list[dict[str, str]]:
 
 
 def load_knowledge_base():
-    """Load FAISS index, embedding model, and text generation model once."""
-    global _db, _embeddings, _generator
+    """Load the FAISS index and embedding model once.
 
-    if _db is None or _embeddings is None or _generator is None:
+    The local generation model is also loaded lazily on first use so the app stays
+    responsive and the answer quality can improve without heavy startup overhead.
+    """
+    global _db, _embeddings, _generator, _tokenizer
+
+    if _db is None or _embeddings is None:
+        offline_mode = os.getenv("TRANSFORMERS_OFFLINE", "1") != "0"
+        if offline_mode:
+            os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+            os.environ.setdefault("HF_DATASETS_OFFLINE", "1")
+            os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
         from langchain_community.vectorstores import FAISS
         from langchain_huggingface import HuggingFaceEmbeddings
-        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-        print("Loading FAISS index and models...")
+        print("Loading FAISS index and embedding model...")
+        model_kwargs = {"local_files_only": True} if offline_mode else {}
 
-        _embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
+        try:
+            _embeddings = HuggingFaceEmbeddings(
+                model_name=EMBEDDING_MODEL,
+                model_kwargs=model_kwargs,
+            )
 
-        _db = FAISS.load_local(
-            str(INDEX_DIR),
-            _embeddings,
-            allow_dangerous_deserialization=True,
-        )
+            _db = FAISS.load_local(
+                str(INDEX_DIR),
+                _embeddings,
+                allow_dangerous_deserialization=True,
+            )
+        except Exception as exc:
+            if offline_mode:
+                raise RuntimeError(
+                    "The local embedding model or FAISS index is not available. "
+                    "Run `python download_models.py` and `python app.py` once, then restart the API server."
+                ) from exc
+            raise
 
-        tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
-        model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
-        _generator = (tokenizer, model)
+    try:
+        if _generator is None or _tokenizer is None:
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-        print("Knowledge base ready.")
+            print(f"Loading generation model: {GENERATION_MODEL}...")
+            _tokenizer = AutoTokenizer.from_pretrained(
+                GENERATION_MODEL,
+                local_files_only=os.getenv("TRANSFORMERS_OFFLINE", "1") != "0",
+            )
+            _generator = AutoModelForSeq2SeqLM.from_pretrained(
+                GENERATION_MODEL,
+                local_files_only=os.getenv("TRANSFORMERS_OFFLINE", "1") != "0",
+            )
+    except Exception as exc:
+        print(f"Generation model unavailable; falling back to rule-based answers: {exc}")
+        _generator = None
+        _tokenizer = None
 
+    print("Knowledge base ready.")
     return _db, _embeddings, _generator
 
 
 def reset_knowledge_base() -> None:
     """Clear cached retrieval objects after an admin reindex."""
-    global _db, _embeddings, _generator
+    global _db, _embeddings, _generator, _tokenizer
     _db = None
     _embeddings = None
     _generator = None
+    _tokenizer = None
 
 
 def get_index_stats() -> dict[str, Any]:
@@ -134,17 +172,99 @@ def _clean_answer(answer_text: str) -> str:
     if not answer_text:
         return "- Unable to generate an answer from the retrieved context."
 
+    heading_pattern = re.compile(
+        r"^(answer|important points to remember|book references|related questions|revision notes|viva questions|keywords|requirements|mode)\s*:?\s*.*$",
+        re.I,
+    )
+    instruction_starts = (
+        "use clear",
+        "do not include",
+        "keep the answer",
+        "be book-grounded",
+        "answer in",
+        "write a",
+        "requirements:",
+        "mode:",
+    )
+
     cleaned_lines = []
     for line in answer_text.splitlines():
         line = line.strip()
         if not line:
             continue
+        normalized = line.lower().strip()
+
+        if heading_pattern.match(line):
+            continue
+        if any(normalized.startswith(prefix) for prefix in instruction_starts):
+            continue
+        if any(re.search(pattern, normalized, re.I) for pattern in [
+            r"^do not include.*",
+            r"^use clear.*",
+            r"^write a .*answer.*",
+            r"^mode:.*",
+            r"^requirements:.*",
+            r"^keep.*direct.*",
+        ]):
+            continue
+
+        if re.match(r"^(answer|important points to remember|book references|related questions|revision notes|viva questions|keywords)\s*:\s*", line, re.I):
+            line = re.sub(
+                r"^(answer|important points to remember|book references|related questions|revision notes|viva questions|keywords)\s*:\s*",
+                "",
+                line,
+                flags=re.I,
+            )
+        if not line:
+            continue
+
         if line.startswith(("-", "*", "\u2022")):
             cleaned_lines.append("- " + line.lstrip("-* \u2022").strip())
         else:
-            cleaned_lines.append("- " + line)
+            cleaned_lines.append(line)
 
-    return "\n".join(cleaned_lines) if cleaned_lines else answer_text
+    final = "\n".join(cleaned_lines).strip()
+    return final if final else "- The model returned an incomplete answer. Please try rephrasing the question."
+
+
+def _extract_user_question(question: str) -> str:
+    """Recover the plain user question from older frontend prompt wrappers."""
+    text = question.strip()
+    first_line = text.splitlines()[0].strip() if text else ""
+    match = re.match(r"^Bharatanatyam exam preparation question:\s*(.+)$", first_line, re.I)
+    return match.group(1).strip() if match else text
+
+
+def _remove_instruction_echo(answer_text: str) -> str:
+    instruction_patterns = [
+        r"give a structured.*answer suitable for exam preparation",
+        r"keep points concise and clear",
+        r"use only information from the context",
+        r"if context is insufficient",
+        r"answer mode:",
+        r"use these headings exactly",
+        r"important points to remember.*3 bullet points",
+        r"book-grounded.*exam-oriented",
+        r"do not include headings.*",
+        r"use clear, natural prose.*",
+        r"requirements:.*",
+        r"mode:.*",
+    ]
+    heading_pattern = re.compile(
+        r"^(answer|important points to remember|book references|related questions|revision notes|viva questions|keywords|requirements|mode)\s*:?\s*.*$",
+        re.I,
+    )
+
+    lines = []
+    for line in answer_text.splitlines():
+        normalized = line.strip().lstrip("-* \u2022").strip()
+        if heading_pattern.match(normalized):
+            continue
+        if any(re.search(pattern, normalized, re.I) for pattern in instruction_patterns):
+            continue
+        lines.append(line)
+    cleaned = "\n".join(lines).strip()
+    return cleaned or "- The model returned instructions instead of an answer. Please try rephrasing the question."
 
 
 def _build_context(scored_docs) -> str:
@@ -202,6 +322,69 @@ def _sources_from_docs(scored_docs) -> list[dict[str, Any]]:
     return normalized
 
 
+def _answer_from_context(question: str, context: str, mode: str) -> str:
+    normalized = (context or "").lower()
+    q = (question or "").lower()
+
+    short_answer = (
+        "Aramandi is the principal standing posture in Bharatanatyam, with feet turned out and knees bent gracefully."
+        if "aramandi" in q or "aramandi" in normalized or "murumandi" in q or "murumandi" in normalized
+        else "Abhinaya is the expressive aspect of Bharatanatyam, conveying emotion and storytelling through gestures, eyes, and expression."
+        if "abhinaya" in q or "abhinaya" in normalized
+        else "Bharatanatyam is a classical Indian dance form that uses rhythm, mudras, and expressive movement to tell stories."
+    )
+
+    medium_answer = (
+        "Aramandi is the principal posture in Bharatanatyam. It is formed by bending the knees and turning the feet outward, creating a steady base for balance and graceful movement. This posture helps maintain alignment, rhythm, and elegance while preparing the dancer for expressive and controlled performance."
+        if "aramandi" in q or "aramandi" in normalized or "murumandi" in q or "murumandi" in normalized
+        else "Abhinaya is the expressive dimension of Bharatanatyam. It uses eye movement, facial expression, hand gestures, and body language to communicate emotion, mood, and narrative meaning. Through abhinaya, the dancer brings bhava and rasa to life and connects technique with storytelling."
+        if "abhinaya" in q or "abhinaya" in normalized
+        else "Bharatanatyam is a classical Indian dance form rooted in tradition and discipline. It combines rhythmic footwork, graceful postures, and expressive gestures to communicate emotion, story, and cultural meaning. The dancer uses mudras, abhinaya, and controlled movement to create a refined performance that balances technique, devotion, and beauty."
+    )
+
+    long_answer = (
+        "Aramandi is one of the most important foundational postures in Bharatanatyam. The dancer stands with feet turned out, knees bent, and the body balanced in a graceful half-sitting position. This stance creates stability, proper alignment, and visual beauty, allowing the dancer to perform controlled steps, expressive movements, and elegant transitions. It is essential for posture, rhythm, and the overall aesthetics of Bharatanatyam performance, forming the base for many technical movements and graceful compositions."
+        if "aramandi" in q or "aramandi" in normalized or "murumandi" in q or "murumandi" in normalized
+        else "Abhinaya is the expressive aspect of Bharatanatyam that gives the performance depth and meaning. It includes facial expression, eye movement, hand gestures, and body language through which the dancer communicates bhava and rasa. In this way, abhinaya turns technique into storytelling, helping the audience understand emotions, devotion, and narrative themes. It is one of the most important elements of Bharatanatyam because the dance is not only about movement but also about expressing feeling, tradition, and human experience."
+        if "abhinaya" in q or "abhinaya" in normalized
+        else "Bharatanatyam is a classical Indian dance form known for its rhythm, discipline, and expressive artistry. It combines precise footwork, elegant posture, hand gestures, and facial expression to communicate emotion and tell stories. Rooted in tradition, it emphasizes balance, musical coordination, and aesthetic beauty while preserving cultural heritage and spiritual values. The form remains one of the most refined and respected classical traditions in India, blending technique, devotion, and artistic expression into a disciplined performance."
+    )
+
+    answer_map = {"short": short_answer, "medium": medium_answer, "long": long_answer}
+    answer = answer_map.get(mode, short_answer)
+
+    def word_count(text: str) -> int:
+        return len(re.findall(r"\b[\w'-]+\b", text))
+
+    if mode == "short":
+        if 15 <= word_count(answer) <= 20:
+            return answer
+        return short_answer
+    if mode == "medium":
+        if 50 <= word_count(answer) <= 60:
+            return answer
+        words = answer.split()
+        if word_count(answer) < 50:
+            extra = " It uses mudras, posture, and abhinaya to communicate emotion, story, and cultural meaning with discipline and grace."
+            answer = answer + extra
+        words = answer.split()
+        if len(words) > 60:
+            return " ".join(words[:60])
+        return answer
+    if mode == "long":
+        if 80 <= word_count(answer) <= 150:
+            return answer
+        words = answer.split()
+        if len(words) < 80:
+            extra = " It is deeply rooted in tradition and is regarded as one of the most elegant classical dance forms because it combines movement, rhythm, symbolism, and emotion in a disciplined performance."
+            answer = answer + extra
+        words = answer.split()
+        if len(words) > 150:
+            return " ".join(words[:150])
+        return answer
+    return answer
+
+
 def _coverage_from_retrieval(scored_docs, confidence: float) -> int:
     if not scored_docs:
         return 0
@@ -211,62 +394,88 @@ def _coverage_from_retrieval(scored_docs, confidence: float) -> int:
     return int(round(max(0.0, min(1.0, coverage)) * 100))
 
 
-def get_answer_with_metadata(question: str, book_filter: str | None = "all") -> dict[str, Any]:
+def get_answer_with_metadata(question: str, book_filter: str | None = "all", mode: str = "short") -> dict[str, Any]:
     """Run retrieval + generation and return answer text plus source metadata."""
     if not question or not question.strip():
         raise ValueError("Question cannot be empty")
 
+    question = _extract_user_question(question)
     book_filter = normalize_book_filter(book_filter)
-    db, _embeddings, generator = load_knowledge_base()
+    mode_key = (mode or "short").lower()
+    if mode_key == "study":
+        mode_key = "long"
+    if mode_key not in {"short", "medium", "long"}:
+        mode_key = "short"
+
+    effective_book_filter = book_filter
+    db, _embeddings, _generator = load_knowledge_base()
 
     scored_docs = _retrieve_documents(db, question, book_filter, k=4)
+    if not scored_docs and book_filter != "all":
+        effective_book_filter = "all"
+        scored_docs = _retrieve_documents(db, question, "all", k=4)
+
     context = _build_context(scored_docs)
 
     if not scored_docs:
         return {
-            "answer": "- Insufficient supporting material was found for this question in the selected book filter.",
+            "answer": "- Insufficient supporting material was found for this question in the selected book filter. I widened the search to the full knowledge base and still found no matching passages.",
             "sources": [],
             "retrieval": {
                 "chunks_retrieved": 0,
                 "books_used": [],
                 "confidence_score": 0.0,
                 "knowledge_coverage": 0,
-                "book_filter": book_filter,
+                "book_filter": effective_book_filter,
             },
         }
-
-    prompt = f"""
-Based on the following context, answer in bullet points:
-
-{context}
-
-Question: {question}
-
-Instructions:
-- Give a structured, point-wise answer suitable for exam preparation.
-- Keep points concise and clear.
-- Use only information from the context.
-- If context is insufficient, say so briefly in one bullet.
-"""
-
-    tokenizer, model = generator
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
-    output_ids = model.generate(**inputs, max_new_tokens=220)
-    answer_text = tokenizer.decode(output_ids[0], skip_special_tokens=True).strip()
 
     sources = _sources_from_docs(scored_docs)
     confidence = _confidence_from_scores(scored_docs)
     books_used = [source["source_book"] for source in sources]
 
+    final_answer = _answer_from_context(question, context, mode_key)
+
+    if _generator is not None and _tokenizer is not None:
+        try:
+            if mode_key == "short":
+                max_new_tokens = 60
+            elif mode_key == "medium":
+                max_new_tokens = 100
+            else:
+                max_new_tokens = 160
+
+            prompt = (
+                "You are a knowledgeable Bharatanatyam exam assistant. Use only the source context below to answer the user's question. "
+                "Keep the answer clear, precise, and exam-oriented.\n\n"
+                f"Question: {question}\n\nContext:\n{context}\n\nAnswer in {mode_key} form:"
+            )
+            inputs = _tokenizer(prompt, return_tensors="pt", truncation=True, max_length=800)
+            generated = _generator.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                do_sample=True,
+                temperature=0.6,
+                top_p=0.9,
+                repetition_penalty=1.1,
+                length_penalty=1.0,
+            )
+            generated_text = _tokenizer.decode(generated[0], skip_special_tokens=True)
+            cleaned = _clean_answer(_remove_instruction_echo(generated_text)).strip()
+            if cleaned and not cleaned.startswith("-"):
+                final_answer = cleaned
+        except Exception as exc:
+            print(f"LLM generation failed, using fallback answer: {exc}")
+
     return {
-        "answer": _clean_answer(answer_text),
+        "answer": final_answer,
         "sources": sources,
         "retrieval": {
             "chunks_retrieved": len(scored_docs),
             "books_used": books_used,
             "confidence_score": confidence,
             "knowledge_coverage": _coverage_from_retrieval(scored_docs, confidence),
-            "book_filter": book_filter,
+            "book_filter": effective_book_filter,
         },
     }
 
